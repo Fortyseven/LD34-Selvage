@@ -16,6 +16,8 @@ public class Controller2D : MonoBehaviour
         public bool left, right;
         public bool climbingSlope;
         public float slopeAngle, slopeAngleOld;
+        public bool descendingSlope;
+        public Vector3 velocityOld;
 
         public void Reset()
         {
@@ -23,6 +25,7 @@ public class Controller2D : MonoBehaviour
             climbingSlope = false;
             slopeAngleOld = slopeAngle;
             slopeAngle = 0;
+            descendingSlope = false;
         }
     }
 
@@ -35,6 +38,7 @@ public class Controller2D : MonoBehaviour
     public int verticalRayCount = 4;
 
     private float maxClimbAngle = 80;
+    private float maxDescendAngle = 75;
 
     float horizontalRaySpacing;
     private float verticalRaySpacing;
@@ -75,9 +79,13 @@ public class Controller2D : MonoBehaviour
 
     public void Move( Vector3 velocity )
     {
-        collisions.Reset();
-
         UpdateRaycastOrigins();
+        collisions.Reset();
+        collisions.velocityOld = velocity;
+
+        if ( velocity.y < 0 ) {
+            DescendSlope( ref velocity );
+        }
 
         if ( velocity.x != 0 ) {
             HorizontalCollisions( ref velocity );
@@ -97,12 +105,19 @@ public class Controller2D : MonoBehaviour
             Vector2 rayOrigin = ( direction_x == -1 ) ? _raycast_origins.bottomLeft : _raycast_origins.bottomRight;
             rayOrigin += Vector2.up * ( horizontalRaySpacing * i );
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.right * direction_x, rayLength, collisionMask);
-            //Debug.DrawRay( _raycast_origins.bottomLeft + Vector2.right * verticalRaySpacing * i, Vector2.up * -2, Color.red );
+
             Debug.DrawRay( rayOrigin, Vector2.right * direction_x * rayLength, Color.red );
+
             if ( hit ) {
                 float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
 
                 if ( i == 0 && slopeAngle <= maxClimbAngle ) {
+
+                    if ( collisions.descendingSlope ) {
+                        collisions.descendingSlope = false;
+                        velocity = collisions.velocityOld;
+                    }
+
                     float distanceToSlopeStart = 0;
 
                     if ( slopeAngle != collisions.slopeAngleOld ) {
@@ -143,6 +158,31 @@ public class Controller2D : MonoBehaviour
         }
     }
 
+    private void DescendSlope( ref Vector3 velocity )
+    {
+        float directionX = Mathf.Sign(velocity.x);
+
+        Vector2 rayOrigin = (directionX == -1) ? _raycast_origins.bottomRight : _raycast_origins.bottomLeft;
+        RaycastHit2D hit = Physics2D.Raycast(rayOrigin, -Vector2.up, Mathf.Infinity, collisionMask);
+        if ( hit ) {
+            float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
+            if ( slopeAngle != 0 && slopeAngle <= maxDescendAngle ) {
+                if ( Mathf.Sign( hit.normal.x ) == directionX ) {
+                    if ( ( hit.distance - SKIN_WIDTH ) <= Mathf.Tan( slopeAngle * Mathf.Deg2Rad ) * Mathf.Abs( velocity.x ) ) {
+                        float moveDistance = Mathf.Abs( velocity.x );
+                        float descendVelocityY = Mathf.Sin( slopeAngle * Mathf.Deg2Rad ) * moveDistance;
+                        velocity.x = Mathf.Cos( slopeAngle * Mathf.Deg2Rad ) * moveDistance * Mathf.Sign( velocity.x );
+                        velocity.y -= descendVelocityY;
+
+                        collisions.slopeAngle = slopeAngle;
+                        collisions.descendingSlope = true;
+                        collisions.below = true;
+                    }
+                }
+            }
+        }
+    }
+
     public void VerticalCollisions( ref Vector3 velocity )
     {
         float directionY = Mathf.Sign( velocity.y );
@@ -164,6 +204,21 @@ public class Controller2D : MonoBehaviour
 
                 collisions.below = ( directionY == -1 );
                 collisions.above = ( directionY == 1 );
+            }
+        }
+
+        if ( collisions.climbingSlope ) {
+            float directionX = Mathf.Sign(velocity.x);
+            rayLength = Mathf.Abs( velocity.x ) + SKIN_WIDTH;
+            Vector2 rayOrigin = ((directionX == -1) ? _raycast_origins.bottomLeft : _raycast_origins.bottomRight) +
+                                Vector2.up * velocity.y;
+            RaycastHit2D hit = Physics2D.Raycast( rayOrigin, Vector2.right * directionX, rayLength, collisionMask );
+            if ( hit ) {
+                float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
+                if ( slopeAngle != collisions.slopeAngle ) {
+                    velocity.x = ( hit.distance - SKIN_WIDTH ) * directionX;
+                    collisions.slopeAngle = slopeAngle;
+                }
             }
         }
     }
