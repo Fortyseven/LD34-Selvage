@@ -77,7 +77,7 @@ public class PlatformController : RaycastController
                 rayOrigin += Vector2.right * ( verticalRaySpacing * i );
                 RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up*directionY, rayLength, passengerMask);
 
-                if ( hit ) {
+                if ( hit && hit.distance != 0 ) {
                     if ( !movedPassengers.Contains( hit.transform ) ) {
                         movedPassengers.Add( hit.transform );
                         float pushX = (directionY == 1) ? velocity.x : 0;
@@ -99,7 +99,7 @@ public class PlatformController : RaycastController
                 rayOrigin += Vector2.up * ( horizontalRaySpacing * i );
                 RaycastHit2D hit = Physics2D.Raycast( rayOrigin, Vector2.right * directionX, rayLength, passengerMask );
 
-                if ( hit ) {
+                if ( hit && hit.distance != 0 ) {
                     if ( !movedPassengers.Contains( hit.transform ) ) {
                         movedPassengers.Add( hit.transform );
                         float pushX = velocity.x - ( hit.distance - SKIN_WIDTH ) * directionX; ;
@@ -119,7 +119,7 @@ public class PlatformController : RaycastController
                 Vector2 rayOrigin = _raycast_origins.topLeft + Vector2.right * ( verticalRaySpacing * i );
                 RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up, rayLength, passengerMask);
 
-                if ( hit ) {
+                if ( hit && hit.distance != 0 ) {
                     if ( !movedPassengers.Contains( hit.transform ) ) {
                         movedPassengers.Add( hit.transform );
                         float pushX = velocity.x;

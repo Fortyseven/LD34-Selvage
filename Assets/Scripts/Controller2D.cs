@@ -16,6 +16,7 @@ public class Controller2D : RaycastController
         public float slopeAngle, slopeAngleOld;
         public bool descendingSlope;
         public Vector3 velocityOld;
+        public bool fallingThroughPlatform;
 
         public void Reset()
         {
@@ -28,6 +29,7 @@ public class Controller2D : RaycastController
     }
 
     public CollisionInfo collisions;
+    private Vector2 playerInput;
 
     private float maxClimbAngle = 80;
     private float maxDescendAngle = 75;
@@ -39,9 +41,16 @@ public class Controller2D : RaycastController
 
     public void Move( Vector3 velocity, bool standingOnPlatform = false )
     {
+        Move( velocity, Vector2.zero, standingOnPlatform );
+    }
+
+    public void Move( Vector3 velocity, Vector2 input, bool standingOnPlatform = false )
+    {
         UpdateRaycastOrigins();
         collisions.Reset();
         collisions.velocityOld = velocity;
+
+        playerInput = input;
 
         if ( velocity.y < 0 ) {
             DescendSlope( ref velocity );
@@ -166,6 +175,21 @@ public class Controller2D : RaycastController
             Debug.DrawRay( rayOrigin, Vector2.up * directionY * rayLength, Color.red );
 
             if ( hit ) {
+
+                if ( hit.collider.tag == "Through" ) {
+                    if ( directionY == 1 || hit.distance == 0 ) {
+                        continue;
+                    }
+                    if ( collisions.fallingThroughPlatform ) {
+                        continue;
+                    }
+                    if ( playerInput.y == -1 ) {
+                        collisions.fallingThroughPlatform = true;
+                        Invoke( "ResetFallingThroughPlatform", 0.5f );
+                        continue;
+                    }
+                }
+
                 velocity.y = ( hit.distance - SKIN_WIDTH ) * directionY;
                 rayLength = hit.distance;
                 if ( collisions.climbingSlope ) {
@@ -192,4 +216,10 @@ public class Controller2D : RaycastController
             }
         }
     }
+
+    public void ResetFallingThroughPlatform()
+    {
+        collisions.fallingThroughPlatform = false;
+    }
+
 }
