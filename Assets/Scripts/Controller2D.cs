@@ -1,15 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-[RequireComponent( typeof( BoxCollider2D ) )]
-public class Controller2D : MonoBehaviour
+public class Controller2D : RaycastController
 {
-    struct RaycastOrigins
-    {
-        public Vector2 topLeft, topRight;
-        public Vector2 bottomLeft, bottomRight;
-    }
-
     public struct CollisionInfo
     {
         public bool above, below;
@@ -29,52 +22,14 @@ public class Controller2D : MonoBehaviour
         }
     }
 
-    public LayerMask collisionMask;
     public CollisionInfo collisions;
-
-    const float SKIN_WIDTH = 0.015f;
-
-    public int horizontalRayCount = 4;
-    public int verticalRayCount = 4;
 
     private float maxClimbAngle = 80;
     private float maxDescendAngle = 75;
 
-    float horizontalRaySpacing;
-    private float verticalRaySpacing;
-
-    private BoxCollider2D collider2d;
-
-    private RaycastOrigins _raycast_origins;
-
-    public void Start()
+    public override void Start()
     {
-        collider2d = GetComponent<BoxCollider2D>();
-        CalculateRaySpacing();
-    }
-
-    private void UpdateRaycastOrigins()
-    {
-        Bounds bounds = collider2d.bounds;
-        bounds.Expand( SKIN_WIDTH * -2 );
-
-        _raycast_origins.bottomLeft = new Vector2( bounds.min.x, bounds.min.y );
-        _raycast_origins.bottomRight = new Vector2( bounds.max.x, bounds.min.y );
-        _raycast_origins.topLeft = new Vector2( bounds.min.x, bounds.max.y );
-        _raycast_origins.topRight = new Vector2( bounds.max.x, bounds.max.y );
-    }
-
-    private void CalculateRaySpacing()
-    {
-        Bounds bounds = collider2d.bounds;
-        bounds.Expand( SKIN_WIDTH * -2 );
-
-        horizontalRayCount = Mathf.Clamp( horizontalRayCount, 2, int.MaxValue );
-        verticalRayCount = Mathf.Clamp( verticalRayCount, 2, int.MaxValue );
-
-        horizontalRaySpacing = bounds.size.y / ( horizontalRayCount - 1 );
-        verticalRaySpacing = bounds.size.x / ( verticalRayCount - 1 );
-
+        base.Start();
     }
 
     public void Move( Vector3 velocity )
