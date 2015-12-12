@@ -1,4 +1,9 @@
-﻿using UnityEngine;
+﻿/**
+* Based on a tutorial series by Sebastian Lague 
+* https://www.youtube.com/playlist?list=PLFt_AvWsXl0f0hqURlhyIoAabKPgRsqjz
+**/
+
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 

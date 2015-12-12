@@ -1,16 +1,24 @@
-﻿using UnityEngine;
+﻿/**
+* Based on a tutorial series by Sebastian Lague 
+* https://www.youtube.com/playlist?list=PLFt_AvWsXl0f0hqURlhyIoAabKPgRsqjz
+**/
+
+using UnityEngine;
 using System.Collections;
 
 [RequireComponent( typeof( Controller2D ) )]
 public class Player : MonoBehaviour
 {
-    public float jumpHeight = 4;
+    public float maxJumpHeight = 4;
+    public float minJumpHeight = 1;
+
     public float timeToJumpApex = 0.4f;
 
     private Controller2D controller;
     private Vector3 velocity;
     private float gravity;
-    private float jumpVelocity;
+    private float maxJumpVelocity;
+    private float minJumpVelocity;
 
     private float accelerationTimeAirborne = .2f;
     private float accelerationTimeGrounded = .1f;
@@ -20,20 +28,24 @@ public class Player : MonoBehaviour
     void Start()
     {
         controller = GetComponent<Controller2D>();
-        gravity = -( 2 * jumpHeight ) / Mathf.Pow( timeToJumpApex, 2 );
-        jumpVelocity = Mathf.Abs( gravity * timeToJumpApex );
-        print( "Gravity: " + gravity + " jump: " + jumpVelocity );
+        gravity = -( 2 * maxJumpHeight ) / Mathf.Pow( timeToJumpApex, 2 );
+
+        maxJumpVelocity = Mathf.Abs( gravity * timeToJumpApex );
+        minJumpVelocity = Mathf.Sqrt( 2 * Mathf.Abs( gravity ) * minJumpHeight );
     }
 
     void Update()
     {
-        if ( controller.collisions.above || controller.collisions.below ) {
-            velocity.y = 0;
-        }
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
         if ( Input.GetKeyDown( KeyCode.Space ) && controller.collisions.below ) {
-            velocity.y = jumpVelocity;
+            velocity.y = maxJumpVelocity;
+        }
+
+        if ( Input.GetKeyUp( KeyCode.Space ) ) {
+            if ( velocity.y > minJumpVelocity ) {
+                velocity.y = minJumpVelocity;
+            }
         }
 
         float targetVelocityX  = input.x * moveSpeed;
@@ -41,6 +53,15 @@ public class Player : MonoBehaviour
         velocity.x = Mathf.SmoothDamp( velocity.x, targetVelocityX, ref velocityXSmoothing,
                                 ( controller.collisions.below ) ? accelerationTimeGrounded : accelerationTimeAirborne );
         velocity.y += gravity * Time.deltaTime;
-        controller.Move( velocity * Time.deltaTime );
+
+        if ( controller.collisions.above || controller.collisions.below ) {
+            velocity.y = 0;
+        }
+
+        controller.Move( velocity * Time.deltaTime, input );
+
+        if ( controller.collisions.above || controller.collisions.below ) {
+            velocity.y = 0;
+        }
     }
 }
