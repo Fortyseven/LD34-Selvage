@@ -29,7 +29,7 @@ public class Controller2D : RaycastController
     }
 
     public CollisionInfo collisions;
-    private Vector2 playerInput;
+    public Vector2 playerInput;
 
     private float maxClimbAngle = 80;
     private float maxDescendAngle = 75;
@@ -70,7 +70,7 @@ public class Controller2D : RaycastController
 
     }
 
-    public void HorizontalCollisions( ref Vector3 velocity )
+    private void HorizontalCollisions( ref Vector3 velocity )
     {
         float direction_x = Mathf.Sign( velocity.x );
         float rayLength = Mathf.Abs( velocity.x ) + SKIN_WIDTH;
@@ -162,7 +162,7 @@ public class Controller2D : RaycastController
         }
     }
 
-    public void VerticalCollisions( ref Vector3 velocity )
+    private void VerticalCollisions( ref Vector3 velocity )
     {
         float directionY = Mathf.Sign( velocity.y );
         float rayLength = Mathf.Abs( velocity.y ) + SKIN_WIDTH;
